@@ -2,6 +2,7 @@
 #include <vector>
 #include <optional>
 
+// todo: use proper memory model
 template<typename T>
 class RingBuffer {
 public:
@@ -31,6 +32,14 @@ public:
       head = Increment(head);
 
       return ret;
+   }
+
+   T PopWait() {
+      while (true) {
+         if (auto data = Pop()) {
+            return data.value();
+         }
+      }
    }
 
    bool WasEmpty() const {
