@@ -43,15 +43,19 @@ group ""
 project "tests"
     kind "ConsoleApp"
     language "C++"
-    files { "tests/*.h", "tests/*.cpp" }
+    warnings "High"
+    flags { "FatalWarnings" }
 
+    files { "tests/*.h", "tests/*.cpp" }
     includedirs { "deps/gtest/googletest/include", "hpds" }
     links { "gtest" }
 
 project "benchmarks"
     kind "ConsoleApp"
     language "C++"
-    files { "benchmarks/*.h", "benchmarks/*.cpp" }
+    warnings "High"
+    flags { "FatalWarnings" }
 
+    files { "benchmarks/*.h", "benchmarks/*.cpp" }
     includedirs { "deps/benchmark/include", "hpds" }
     links { "benchmark" }
