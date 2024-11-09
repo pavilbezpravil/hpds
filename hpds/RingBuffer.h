@@ -2,7 +2,6 @@
 #include <vector>
 #include <optional>
 
-// todo: use proper memory model
 template<typename T>
 class RingBuffer {
 public:
@@ -11,27 +10,27 @@ public:
    }
 
    bool Push(const T& data) {
-      int nextTail = Increment(tail);
-      if (nextTail == head) {
+      int curTail = tail.load(std::memory_order::relaxed);
+      int nextTail = Increment(curTail);
+      if (nextTail == head.load(std::memory_order::acquire)) {
          return false;
       }
 
-      buffer[tail] = data;
-      tail = nextTail;
+      buffer[curTail] = data;
+      tail.store(nextTail, std::memory_order::release);
 
       return true;
 
    }
 
    std::optional<T> Pop() {
-      if (head == tail) {
+      int curHead = head.load(std::memory_order::relaxed);
+      if (curHead == tail.load(std::memory_order::acquire)) {
          return {};
       }
 
-      T ret = std::move(buffer[head]);
-      head = Increment(head);
-
-      return ret;
+      head.store(Increment(curHead), std::memory_order::release);
+      return std::move(buffer[curHead]);
    }
 
    T PopWait() {
@@ -53,8 +52,10 @@ public:
 private:
    std::vector<T> buffer;
    int capacity;
-   int head = 0;
-   int tail = 0;
+
+   // todo: false sharing
+   std::atomic<int> head = 0;
+   std::atomic<int> tail = 0;
 
    int Increment(int val) const {
       return (val + 1) % capacity; // note: if capacity known in compile time % will be faster!
