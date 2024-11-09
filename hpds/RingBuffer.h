@@ -61,3 +61,36 @@ private:
       return (val + 1) % capacity; // note: if capacity known in compile time % will be faster!
    }
 };
+
+inline bool RingBufferMultiThreadTest(int ringBufferSize, int count) {
+   RingBuffer<int> rb{ ringBufferSize };
+   int nextExpected = 0;
+
+   std::thread writer{
+   [&]
+   {
+      int data = 0;
+      while (data < count) {
+         while (!rb.Push(data));
+         ++data;
+      }
+   } };
+
+   std::thread reader{
+   [&]
+   {
+      while (nextExpected < count) {
+         int data = rb.PopWait();
+
+         if (data != nextExpected) {
+            break;
+         }
+         ++nextExpected;
+      }
+   } };
+
+   writer.join();
+   reader.join();
+
+   return nextExpected == count;
+}

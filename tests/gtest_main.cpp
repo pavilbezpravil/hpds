@@ -38,40 +38,8 @@ TEST(RingBuffer, SingleThread) {
    ASSERT_FALSE(rb.Pop().has_value());
 }
 
-TEST(RingBuffer, MT) {
-   RingBuffer<int> rb{ 2 };
-
-   int count = 10'000'000;
-
-   std::thread writer{
-   [&]
-   {
-      int data = 0;
-      while (data < count) {
-         while (!rb.Push(data));
-         ++data;
-      }
-   }};
-
-   int nextExpected = 0;
-
-   std::thread reader{
-   [&]
-   {
-      while (nextExpected < count) {
-         int data = rb.PopWait();
-
-         if (data != nextExpected) {
-            break;
-         }
-         ++nextExpected;
-      }
-   }};
-
-   writer.join();
-   reader.join();
-
-   ASSERT_EQ(nextExpected, count);
+TEST(RingBuffer, MultiThreaded) {
+   ASSERT_TRUE(RingBufferMultiThreadTest(10, 10'000'000));
 }
 
 int main(int argc, char** argv) {
