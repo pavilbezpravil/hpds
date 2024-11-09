@@ -40,6 +40,15 @@ group "deps"
             links { "Shlwapi" }
 group ""
 
+project "hpds"
+    kind "StaticLib"
+    language "C++"
+    warnings "High"
+    flags { "FatalWarnings" }
+
+    files { "hpds/*.h", "hpds/*.cpp" }
+    includedirs { "hpds" }
+
 project "tests"
     kind "ConsoleApp"
     language "C++"
@@ -48,7 +57,7 @@ project "tests"
 
     files { "tests/*.h", "tests/*.cpp" }
     includedirs { "deps/gtest/googletest/include", "hpds" }
-    links { "gtest" }
+    links { "gtest", "hpds" }
 
 project "benchmarks"
     kind "ConsoleApp"
@@ -58,4 +67,4 @@ project "benchmarks"
 
     files { "benchmarks/*.h", "benchmarks/*.cpp" }
     includedirs { "deps/benchmark/include", "hpds" }
-    links { "benchmark" }
+    links { "benchmark", "hpds" }

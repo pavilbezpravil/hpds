@@ -12,16 +12,7 @@ BM_BusyWaitForNanoseconds/512            604 ns          614 ns      1120000
 BM_BusyWaitForNanoseconds/4096          4110 ns         4081 ns       172308
  */
 // Cant emulate less that 100 ns on my CPU
-void BusyWaitForNanoseconds(int nanoseconds = 100) {
-   auto start = std::chrono::high_resolution_clock::now();
-   while (true) {
-      auto now = std::chrono::high_resolution_clock::now();
-      auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(now - start);
-      if (elapsed.count() >= nanoseconds) {
-         break;
-      }
-   }
-}
+void BusyWaitForNanoseconds(int nanoseconds = 100);
 
 /*
 -----------------------------------------------------------------
@@ -35,9 +26,9 @@ BM_EmulateWork/16             143 ns          144 ns      4977778
 BM_EmulateWork/32             291 ns          292 ns      2357895
  */
 // 1 - 16 useful range, than use BusyWaitForNanoseconds
-void EmulateWork(int iterations = 4) {
-   volatile double result = 0.0;
-   for (int i = 0; i < iterations; ++i) {
-      result += std::sin(i) * std::cos(i);
-   }
-}
+void EmulateWork(int iterations = 4);
+
+std::vector<int> GenerateRandomIntegers(int count, int minValue = 0, int maxValue = INT_MAX);
+std::vector<float> GenerateRandomDoubles(int count, float minValue = 0.f, float maxValue = 1000.f);
+
+std::vector<int> GenerateSequentialVector(int N);

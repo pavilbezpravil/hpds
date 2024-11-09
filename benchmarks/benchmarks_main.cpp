@@ -46,4 +46,16 @@ static void BM_RingBuffer_MultiThreaded(benchmark::State& state) {
 }
 BENCHMARK(BM_RingBuffer_MultiThreaded)->ArgsProduct({{2, 8, 64, 512, 1024 * 10}, {1'000'000}})->Unit(benchmark::kMillisecond);
 
+// Fully utilize CPU. Real time == CPU time
+static void BM_QSort(benchmark::State& state) {
+   for (auto _ : state) {
+      state.PauseTiming();
+      auto random = GenerateRandomIntegers((int)state.range(0));
+      state.ResumeTiming();
+
+      std::ranges::sort(random);
+   }
+}
+BENCHMARK(BM_QSort)->Range(1, 10'000'000)->Unit(benchmark::kMillisecond);
+
 BENCHMARK_MAIN();
