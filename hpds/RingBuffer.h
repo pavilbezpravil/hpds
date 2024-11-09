@@ -84,25 +84,20 @@ inline bool RingBufferMultiThreadTest(int ringBufferSize, int count, bool emulat
       }
    } };
 
-   std::thread reader{
-   [&]
-   {
-      while (nextExpected < count) {
-         int data = rb.PopWait();
+   while (nextExpected < count) {
+      int data = rb.PopWait();
 
-         if (data != nextExpected) {
-            break;
-         }
-         ++nextExpected;
-
-         if (emulateWork) {
-            EmulateWork(4 * 2);
-         }
+      if (data != nextExpected) {
+         break;
       }
-   } };
+      ++nextExpected;
+
+      if (emulateWork) {
+         EmulateWork(4 * 2);
+      }
+   }
 
    writer.join();
-   reader.join();
 
    return nextExpected == count;
 }
