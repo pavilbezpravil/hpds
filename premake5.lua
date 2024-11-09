@@ -43,7 +43,7 @@ group ""
 project "hpds"
     kind "StaticLib"
     language "C++"
-    warnings "High"
+    warnings "Default"
     flags { "FatalWarnings" }
 
     files { "hpds/*.h", "hpds/*.cpp" }
@@ -52,7 +52,7 @@ project "hpds"
 project "tests"
     kind "ConsoleApp"
     language "C++"
-    warnings "High"
+    warnings "Default"
     flags { "FatalWarnings" }
 
     files { "tests/*.h", "tests/*.cpp" }
@@ -62,7 +62,7 @@ project "tests"
 project "benchmarks"
     kind "ConsoleApp"
     language "C++"
-    warnings "High"
+    warnings "Default"
     flags { "FatalWarnings" }
 
     files { "benchmarks/*.h", "benchmarks/*.cpp" }

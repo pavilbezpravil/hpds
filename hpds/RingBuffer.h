@@ -2,6 +2,9 @@
 #include <vector>
 #include <optional>
 
+// #define ALIGN_CACHE_LINE alignas(64)
+#define ALIGN_CACHE_LINE
+
 template<typename T>
 class RingBuffer {
 public:
@@ -53,16 +56,17 @@ private:
    std::vector<T> buffer;
    int capacity;
 
-   // todo: false sharing
-   std::atomic<int> head = 0;
-   std::atomic<int> tail = 0;
+   ALIGN_CACHE_LINE std::atomic<int> head = 0;
+   ALIGN_CACHE_LINE std::atomic<int> tail = 0;
 
    int Increment(int val) const {
       return (val + 1) % capacity; // note: if capacity known in compile time % will be faster!
    }
 };
 
-inline bool RingBufferMultiThreadTest(int ringBufferSize, int count) {
+#include "Helpers.h"
+
+inline bool RingBufferMultiThreadTest(int ringBufferSize, int count, bool emulateWork = false) {
    RingBuffer<int> rb{ ringBufferSize };
    int nextExpected = 0;
 
@@ -73,6 +77,10 @@ inline bool RingBufferMultiThreadTest(int ringBufferSize, int count) {
       while (data < count) {
          while (!rb.Push(data));
          ++data;
+
+         if (emulateWork) {
+            EmulateWork(4);
+         }
       }
    } };
 
@@ -86,6 +94,10 @@ inline bool RingBufferMultiThreadTest(int ringBufferSize, int count) {
             break;
          }
          ++nextExpected;
+
+         if (emulateWork) {
+            EmulateWork(4 * 2);
+         }
       }
    } };
 

@@ -44,7 +44,7 @@ static void BM_RingBuffer_MultiThreaded(benchmark::State& state) {
 
    state.SetItemsProcessed(state.iterations() * count);
 }
-BENCHMARK(BM_RingBuffer_MultiThreaded)->ArgsProduct({{2, 8, 64, 512, 1024 * 10}, {1'000'000}})->Unit(benchmark::kMillisecond);
+BENCHMARK(BM_RingBuffer_MultiThreaded)->ArgsProduct({{64, 512, 1024 * 10, 1'000'000}, {1'000'000}})->Unit(benchmark::kMillisecond);
 
 // Fully utilize CPU. Real time == CPU time
 static void BM_QSort(benchmark::State& state) {
