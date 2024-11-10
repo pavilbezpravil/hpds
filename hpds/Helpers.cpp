@@ -3,6 +3,18 @@
 #include <random>
 #include <ranges>
 
+thread_local uint32_t tlRandPcgState;
+
+uint32_t HashPcg(uint32_t& state) {
+   state = state * 747796405u + 2891336453u;
+   uint32_t word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+   return (word >> 22u) ^ word;
+}
+
+uint32_t RandPcg() {
+   return HashPcg(tlRandPcgState);
+}
+
 void BusyWaitForNanoseconds(int nanoseconds) {
    auto start = std::chrono::high_resolution_clock::now();
    while (true) {
@@ -19,6 +31,16 @@ void EmulateWork(int iterations) {
    for (int i = 0; i < iterations; ++i) {
       result += std::sin(i) * std::cos(i);
    }
+}
+
+std::vector<uint8_t> GenerateRandomBytes(int count, uint8_t minValue, uint8_t maxValue) {
+   std::random_device rd;
+   std::mt19937 gen(rd());
+   std::uniform_int_distribution<uint32_t> dis(minValue, maxValue);
+
+   auto randomNumbersView = std::views::iota(0, count)
+      | std::views::transform([&](int) { return dis(gen); });
+   return { randomNumbersView.begin(), randomNumbersView.end() };
 }
 
 std::vector<int> GenerateRandomIntegers(int count, int minValue, int maxValue) {

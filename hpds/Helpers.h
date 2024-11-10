@@ -1,6 +1,9 @@
 #pragma once
 #include <chrono>
 
+uint32_t HashPcg(uint32_t& state);
+uint32_t RandPcg();
+
 /*
 ----------------------------------------------------------------------------
 Benchmark                                  Time             CPU   Iterations
@@ -28,6 +31,7 @@ BM_EmulateWork/32             291 ns          292 ns      2357895
 // 1 - 16 useful range, than use BusyWaitForNanoseconds
 void EmulateWork(int iterations = 4);
 
+std::vector<uint8_t> GenerateRandomBytes(int count, uint8_t minValue = 0, uint8_t maxValue = 0xff);
 std::vector<int> GenerateRandomIntegers(int count, int minValue = 0, int maxValue = INT_MAX);
 std::vector<float> GenerateRandomDoubles(int count, float minValue = 0.f, float maxValue = 1000.f);
 
