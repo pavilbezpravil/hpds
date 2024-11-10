@@ -47,18 +47,6 @@ static void BM_RingBuffer_MultiThreaded(benchmark::State& state) {
 }
 BENCHMARK(BM_RingBuffer_MultiThreaded)->ArgsProduct({{2, 8, 16, 64, 256, 1024, 1024 * 10}, {1'000'000}})->Unit(benchmark::kMillisecond);
 
-// Fully utilize CPU. Real time == CPU time
-static void BM_QSort(benchmark::State& state) {
-   for (auto _ : state) {
-      state.PauseTiming();
-      auto random = GenerateRandomIntegers((int)state.range(0));
-      state.ResumeTiming();
-
-      std::ranges::sort(random);
-   }
-}
-BENCHMARK(BM_QSort)->Range(1, 10'000'000)->Unit(benchmark::kMillisecond);
-
 void ThreadsJoin(std::vector<std::thread>& threads) {
    for (auto& thread : threads) {
       thread.join();
@@ -127,5 +115,33 @@ BENCHMARK_TEMPLATE(BM_SpinLock, std::mutex)->RangeMultiplier(2)->Range(1, 16)->U
 BENCHMARK_TEMPLATE(BM_SpinLock, SpinLockTAS)->RangeMultiplier(2)->Range(1, 16)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_SpinLock, SpinLockTTAS)->RangeMultiplier(2)->Range(1, 16)->Unit(benchmark::kMillisecond);
 BENCHMARK_TEMPLATE(BM_SpinLock, SpinLock)->RangeMultiplier(2)->Range(1, 16)->Unit(benchmark::kMillisecond);
+
+/*
+On sorted data 10 times faster
+
+----------------------------------------------------------------
+Benchmark                      Time             CPU   Iterations
+----------------------------------------------------------------
+BM_BranchPrediction/0       3.39 ms         3.45 ms          204
+BM_BranchPrediction/1      0.355 ms        0.353 ms         1948
+ */
+static void BM_BranchPrediction(benchmark::State& state) {
+   auto numbers = GenerateRandomIntegers(1'000'000);
+   if ((int)state.range(0) == 1) {
+      std::ranges::sort(numbers);
+   }
+
+   for (auto _ : state) {
+      int threshold = INT_MAX / 2;
+
+      volatile int count = 0;
+      for (int number : numbers) {
+         if (number < threshold) {
+            ++count;
+         }
+      }
+   }
+}
+BENCHMARK(BM_BranchPrediction)->Arg(0)->Arg(1)->Unit(benchmark::kMillisecond);
 
 BENCHMARK_MAIN();
