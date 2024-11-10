@@ -14,8 +14,12 @@ public:
    bool Push(const T& data) {
       int curTail = tail.load(std::memory_order::relaxed);
       int nextTail = Increment(curTail);
-      if (nextTail == head.load(std::memory_order::acquire)) {
-         return false;
+
+      if (nextTail == headCached) {
+         headCached = head.load(std::memory_order::acquire);
+         if (nextTail == headCached) {
+            return false;
+         }
       }
 
       buffer[curTail] = data;
@@ -27,8 +31,11 @@ public:
 
    std::optional<T> Pop() {
       int curHead = head.load(std::memory_order::relaxed);
-      if (curHead == tail.load(std::memory_order::acquire)) {
-         return {};
+      if (curHead == tailCached) {
+         tailCached = tail.load(std::memory_order::acquire);
+         if (curHead == tailCached) {
+            return {};
+         }
       }
 
       head.store(Increment(curHead), std::memory_order::release);
@@ -55,8 +62,14 @@ private:
    std::vector<T> buffer;
    int capacity;
 
+   // false sharing decrease perf by ~2
    ALIGN_CACHE_LINE std::atomic<int> head = 0;
    ALIGN_CACHE_LINE std::atomic<int> tail = 0;
+
+   // Idea from https://rigtorp.se/ringbuffer/
+   // Without this optimization throughput 107 M/s, with 538 M/s
+   ALIGN_CACHE_LINE int headCached = 0;
+   ALIGN_CACHE_LINE int tailCached = 0;
 
    int Increment(int val) const {
       int nextVal = val + 1;
