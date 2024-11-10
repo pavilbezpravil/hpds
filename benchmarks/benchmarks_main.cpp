@@ -194,8 +194,8 @@ static void BM_MemoryAccess_Offset(benchmark::State& state) {
 }
 /*
 Max mem throughput 8.7G/s
-One thread: worst 326M/s (20 slower), cache line 1.7G/s
-16 threads: worst 53M/s (164 slower), cache line 126M/s
+One thread: worst random access 326M/s (20 slower), cache line 1.7G/s (5 slower)
+16 threads: worst random access 53M/s (164 slower), cache line 126M/s (69 slower)
 
 # One thread.
 Random offset is worst way to access memory 20 times slower that ideal with 4 bytes

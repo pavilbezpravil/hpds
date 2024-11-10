@@ -22,7 +22,7 @@ public:
    }
 
    void Free(int index) {
-      assert(index < nextIndex_ && "Invalid index to free.");
+      assert(index < nextIndex && "Invalid index to free.");
       freeIndices.push_back(index);
    }
 
