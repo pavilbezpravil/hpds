@@ -4,6 +4,10 @@
 uint32_t HashPcg(uint32_t& state);
 uint32_t RandPcg();
 
+float RandFloat();
+bool RandBool();
+uint32_t RandUint(uint32_t minValue = 0, uint32_t maxValue = UINT_MAX);
+
 /*
 ----------------------------------------------------------------------------
 Benchmark                                  Time             CPU   Iterations

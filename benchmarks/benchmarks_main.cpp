@@ -1,6 +1,7 @@
 #include <benchmark/benchmark.h>
 
 #include "Helpers.h"
+#include "OrderBook.h"
 #include "RingBuffer.h"
 #include "SpinLock.h"
 
@@ -251,5 +252,27 @@ BM_MemoryAccess_Offset/65536/threads:16       55.0 ms         54.7 ms           
  */
 BENCHMARK(BM_MemoryAccess_Offset)->Arg(0)->Unit(benchmark::kMillisecond)->ThreadPerCpu();
 BENCHMARK(BM_MemoryAccess_Offset)->RangeMultiplier(2)->Range(4, 1024 * 64)->Unit(benchmark::kMillisecond)->ThreadPerCpu();
+
+static void BM_OrderBook(benchmark::State& state) {
+   int count = (int)state.range(0);
+
+   for (auto _ : state) {
+      OrderBook ob;
+
+      for (int i = 0; i < count; ++i) {
+         if (RandBool()) {
+            ob.AddOrder(RandUint(90, 105), RandUint(1, 10), true);
+         } else {
+            ob.AddOrder(RandUint(95, 110), RandUint(1, 10), false);
+         }
+      }
+
+      ob.AddBuyOrder(200, 1000);
+      ob.AddSellOrder(0, 2000);
+
+      benchmark::ClobberMemory();
+   }
+}
+BENCHMARK(BM_OrderBook)->Range(100, 1'000'000)->Unit(benchmark::kMillisecond);
 
 BENCHMARK_MAIN();

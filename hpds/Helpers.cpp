@@ -15,6 +15,18 @@ uint32_t RandPcg() {
    return HashPcg(tlRandPcgState);
 }
 
+float RandFloat() {
+   return float(RandPcg()) / float(UINT_MAX);
+}
+
+bool RandBool() {
+   return RandPcg() > UINT_MAX / 2;
+}
+
+uint32_t RandUint(uint32_t minValue, uint32_t maxValue) {
+   return minValue + uint32_t(float(maxValue - minValue) * RandFloat());
+}
+
 void BusyWaitForNanoseconds(int nanoseconds) {
    auto start = std::chrono::high_resolution_clock::now();
    while (true) {

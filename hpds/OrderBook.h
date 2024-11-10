@@ -4,94 +4,117 @@
 class OrderBook {
 public:
    using OrderId = int;
-   using OrderPrice = int;
-   using OrderQuantity = int;
+   using Price = int;
+   using Quantity = int;
 
-   struct Order {
-      OrderId id;
-      OrderPrice price;
-      OrderQuantity quantity;
+   struct LevelInfo {
+      Price price;
+      Quantity quantity;
    };
 
-   OrderId AddSellOrder(OrderPrice price, OrderQuantity quantity) {
+   struct TradeResult {
+      int canceledOrders = 0;
+      Price volume = 0;
+
+      auto operator<=>(const TradeResult&) const = default;
+   };
+
+   struct OrderResult {
+      OrderId id;
+      TradeResult tradeResult;
+
+      auto operator<=>(const OrderResult&) const = default;
+   };
+
+   OrderResult AddSellOrder(Price price, Quantity quantity) {
       return AddOrder(price, quantity, false);
    }
 
-   OrderId AddBuyOrder(OrderPrice price, OrderQuantity quantity) {
+   OrderResult AddBuyOrder(Price price, Quantity quantity) {
       return AddOrder(price, quantity, true);
    }
 
-   OrderId AddOrder(OrderPrice price, OrderQuantity quantity, bool isBuy) {
+   OrderResult AddOrder(Price price, Quantity quantity, bool isBuy) {
       OrderId id = GetNextOrderId();
       orderToPriceMap[id] = std::make_pair(price, isBuy);
 
       if (isBuy) {
-         buyOrdersMap[price][id] = quantity;
+         buyOrdersMap[price].map[id] = quantity;
+         buyOrdersMap[price].quantity += quantity;
       } else {
-         sellOrdersMap[price][id] = quantity;
+         sellOrdersMap[price].map[id] = quantity;
+         sellOrdersMap[price].quantity += quantity;
       }
-      return id;
+      return OrderResult{ id, MatchOrders() };
    }
 
-   struct MatchOrderResult {
-      int executeOrders = 0;
-      OrderPrice totalOrdersPrice = 0;
+   int TotalOrders() const {
+      return (int)orderToPriceMap.size();
+   }
 
-      auto operator<=>(const MatchOrderResult&) const = default;
+private:
+   struct OrdersMapLevelInfo {
+      std::map<OrderId, Quantity> map;
+      Quantity quantity;
    };
 
-   MatchOrderResult MatchOrders() {
-      MatchOrderResult result{};
+   std::map<Price, OrdersMapLevelInfo> sellOrdersMap;
+   std::map<Price, OrdersMapLevelInfo, std::greater<>> buyOrdersMap;
+   std::map<OrderId, std::pair<Price, bool>> orderToPriceMap;
 
-      while (!sellOrdersMap.empty() && !buyOrdersMap.empty()) {
-         auto sellLowerIt = sellOrdersMap.begin();
-         auto buyHighestIt = buyOrdersMap.begin();
+   TradeResult MatchOrders() {
+      TradeResult result{};
 
+      auto sellLowerIt = sellOrdersMap.begin();
+      auto buyHighestIt = buyOrdersMap.begin();
+
+      while (sellLowerIt != sellOrdersMap.end() && buyHighestIt != buyOrdersMap.end()) {
          if (buyHighestIt->first < sellLowerIt->first) {
             break;
          }
 
-         auto& sellOrders = sellLowerIt->second;
-         auto& buyOrders = buyHighestIt->second;
+         auto& sellOrders = sellLowerIt->second.map;
+         auto& buyOrders = buyHighestIt->second.map;
+
+         Quantity& sellQuantities = sellLowerIt->second.quantity;
+         Quantity& buyQuantities = buyHighestIt->second.quantity;
 
          auto sellOrderIt = sellOrders.begin();
          auto buyOrderIt = buyOrders.begin();
 
          while (sellOrderIt != sellOrders.end() && buyOrderIt != buyOrders.end()) {
-            if (sellOrderIt->second <= buyOrderIt->second) {
-               // note: if equal buy must be deleted to and it will on next iteration. I suppose it be faster because less branches
-               buyOrderIt->second -= sellOrderIt->second;
-               result.totalOrdersPrice += sellOrderIt->second;
-               sellOrderIt = sellOrders.erase(sellOrderIt);
-            } else {
-               sellOrderIt->second -= buyOrderIt->second;
-               result.totalOrdersPrice += sellOrderIt->second;
-               buyOrderIt = buyOrders.erase(buyOrderIt);
-            }
-            ++result.executeOrders;
-         }
+            Quantity quantity = std::min(sellOrderIt->second, buyOrderIt->second);
 
-         // we dont must not keep empty orders
-         if (buyOrderIt->second == 0) {
-            buyOrderIt = buyOrders.erase(buyOrderIt);
-            ++result.executeOrders;
+            result.volume += quantity;
+
+            sellOrderIt->second -= quantity;
+            buyOrderIt->second -= quantity;
+
+            sellQuantities -= quantity;
+            buyQuantities -= quantity;
+
+            if (sellOrderIt->second == 0) {
+               orderToPriceMap.erase(sellOrderIt->first);
+               sellOrderIt = sellOrders.erase(sellOrderIt);
+               ++result.canceledOrders;
+            }
+            if (buyOrderIt->second == 0) {
+               orderToPriceMap.erase(buyOrderIt->first);
+               buyOrderIt = buyOrders.erase(buyOrderIt);
+               ++result.canceledOrders;
+            }
          }
 
          if (sellOrderIt == sellOrders.end()) {
-            sellOrdersMap.erase(sellLowerIt);
+            sellLowerIt = sellOrdersMap.erase(sellLowerIt);
          }
          if (buyOrderIt == buyOrders.end()) {
-            buyOrdersMap.erase(buyHighestIt);
+            buyHighestIt = buyOrdersMap.erase(buyHighestIt);
          }
       }
 
       return result;
    }
-
-private:
-   std::map<OrderPrice, std::map<OrderId, OrderQuantity>> sellOrdersMap;
-   std::map<OrderPrice, std::map<OrderId, OrderQuantity>, std::greater<>> buyOrdersMap;
-   std::map<OrderId, std::pair<OrderPrice, bool>> orderToPriceMap;
 
    OrderId nextOrderId = 0;
 
