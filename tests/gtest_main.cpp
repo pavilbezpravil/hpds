@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include "IndexPool.h"
 #include "Queue.h"
 #include "RingBuffer.h"
 
@@ -40,6 +41,25 @@ TEST(RingBuffer, SingleThread) {
 
 TEST(RingBuffer, MultiThreaded) {
    ASSERT_TRUE(RingBufferMultiThreadTest(10, 10'000'000));
+}
+
+TEST(IndexPool, Basic) {
+   IndexPool pool{ 3 };
+   ASSERT_EQ(pool.Available(), 3);
+   ASSERT_EQ(pool.Allocate(), 0);
+   ASSERT_EQ(pool.Available(), 2);
+   ASSERT_EQ(pool.Allocate(), 1);
+   ASSERT_EQ(pool.Available(), 1);
+
+   pool.Free(0);
+   ASSERT_EQ(pool.Allocate(), 0);
+   pool.Free(1);
+   ASSERT_EQ(pool.Allocate(), 1);
+   ASSERT_EQ(pool.Allocate(), 2);
+   pool.Free(0);
+   pool.Free(2);
+   pool.Free(1);
+   ASSERT_EQ(pool.Available(), 3);
 }
 
 int main(int argc, char** argv) {
