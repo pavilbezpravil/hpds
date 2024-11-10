@@ -24,7 +24,7 @@ TEST(Queue, Basic)
 }
 
 TEST(RingBuffer, SingleThread) {
-   RingBuffer<int> rb{2};
+   RingBuffer<int> rb{3};
    ASSERT_TRUE(rb.WasEmpty());
    ASSERT_FALSE(rb.WasFull());
 

@@ -2,13 +2,12 @@
 #include <vector>
 #include <optional>
 
-// #define ALIGN_CACHE_LINE alignas(64)
-#define ALIGN_CACHE_LINE
+#define ALIGN_CACHE_LINE alignas(std::hardware_destructive_interference_size)
 
 template<typename T>
 class RingBuffer {
 public:
-   RingBuffer(int size) : capacity(size + 1) {
+   RingBuffer(int capacity) : capacity(capacity) {
       buffer.resize(capacity);
    }
 
@@ -60,7 +59,8 @@ private:
    ALIGN_CACHE_LINE std::atomic<int> tail = 0;
 
    int Increment(int val) const {
-      return (val + 1) % capacity; // note: if capacity known in compile time % will be faster!
+      int nextVal = val + 1;
+      return nextVal == capacity ? 0 : nextVal;
    }
 };
 
